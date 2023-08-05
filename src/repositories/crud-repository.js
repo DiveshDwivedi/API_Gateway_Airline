@@ -1,4 +1,5 @@
-const { Logger } = require("../config");
+const { StatusCodes } = require("http-status-codes");
+const AppError = require("../utils/errors/app-error");
 
 class CrudRepository {
     constructor(model) {
@@ -6,51 +7,46 @@ class CrudRepository {
     }
 
     async create(data) {
-        try {
-            const response = await this.model.create(data);
-
-            return response;
-        } catch (error) {
-            Logger.error('Something went wrong in CRUD Repo : Create');
-            throw error;
-        }
+        const response = await this.model.create(data);
+        return response;
     }
 
     async destroy(data) {
-        try {
             const response = await this.model.destroy({
                 where : {
                     id:data,
                 }
             });
 
+            if (!response) {
+                throw new AppError('Not able to fetch record', StatusCodes.NOT_FOUND);
+            }
             return response;
-        } catch (error) {
-            Logger.error('Something went wrong in CRUD Repo : Destroy');
-            throw error;
-        }
     }
 
     async get(data) {
-        try {
-            const response = await this.model.findByPK(data);
-
+            const response = await this.model.findByPk(data);
+            if (!response) {
+                throw new AppError('Not able to fetch record', StatusCodes.NOT_FOUND);
+            }
             return response;
-        } catch (error) {
-            Logger.error('Something went wrong in CRUD Repo : Get');
-            throw error;
-        }
     }
 
-    async getAll(data) {
-        try {
-            const response = await this.model.findAll(data);
-
+    async getAll() {
+            const response = await this.model.findAll();
             return response;
-        } catch (error) {
-            Logger.error('Something went wrong in CRUD Repo : Get');
-            throw error;
+    }
+
+    async update(id, data) {
+        const response = await this.model.update(data, { where : {
+            id : id,
+        }});
+
+        if (response != 0) {
+            const airplane = await this.model.findByPk(id)
+            return airplane;
         }
+        throw new AppError('Not able to fetch record', StatusCodes.NOT_FOUND);
     }
 }
 
